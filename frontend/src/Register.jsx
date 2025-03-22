@@ -6,7 +6,8 @@ const Register = () => {
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
 
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || "https://cargarage-e1yl.onrender.com";
+
   console.log("🌐 Aktive API_URL:", API_URL);
 
 
