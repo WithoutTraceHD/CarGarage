@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Dashboard = ({ user, onLogout }) => {
   const [garage, setGarage] = useState(null);
   const [cars, setCars] = useState([]);
@@ -10,7 +12,7 @@ const Dashboard = ({ user, onLogout }) => {
   useEffect(() => {
     if (!user || !user.id) return;
 
-    fetch(`http://localhost:5000/garages?user_id=${user.id}`)
+    fetch(`${API_URL}/garages?user_id=${user.id}`)
       .then((res) => res.json())
       .then(async (garages) => {
         if (garages.length === 0) return;
@@ -18,7 +20,7 @@ const Dashboard = ({ user, onLogout }) => {
         const userGarage = garages[0];
         setGarage(userGarage);
 
-        const resCars = await fetch(`http://localhost:5000/garages/${userGarage.id}/cars`);
+        const resCars = await fetch(`${API_URL}/garages/${userGarage.id}/cars`);
         const carsData = await resCars.json();
         setCars(carsData);
       })
@@ -31,7 +33,7 @@ const Dashboard = ({ user, onLogout }) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    fetch("http://localhost:5000/upload", { method: "POST", body: formData })
+    fetch(`${API_URL}/upload`, { method: "POST", body: formData })
       .then((res) => res.json())
       .then((data) => {
         setNewCar((prev) => ({ ...prev, image_url: data.filePath }));
@@ -51,7 +53,7 @@ const Dashboard = ({ user, onLogout }) => {
       image_url: newCar.image_url || null,
     };
 
-    fetch("http://localhost:5000/cars", {
+    fetch(`${API_URL}/cars`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -66,7 +68,7 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const handleDeleteCar = (carId) => {
-    fetch(`http://localhost:5000/cars/${carId}`, { method: "DELETE" })
+    fetch(`${API_URL}/cars/${carId}`, { method: "DELETE" })
       .then((res) => {
         if (!res.ok) throw new Error("Fehler beim Löschen des Autos");
         setCars((prev) => prev.filter((c) => c.id !== carId));
