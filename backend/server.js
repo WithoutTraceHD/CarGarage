@@ -5,6 +5,8 @@ const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const db = require("./db");
 const multer = require("multer");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const app = express();
 app.use(cors());
@@ -42,6 +44,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
   });
 });
 
+// 🟡 REGISTRIERUNG MIT E-MAIL VERIFIZIERUNG
 app.post(
   "/register",
   [
@@ -63,10 +66,11 @@ app.post(
         if (result.length > 0) return res.status(400).json({ message: "E-Mail bereits vergeben" });
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = crypto.randomBytes(32).toString("hex");
 
         db.query(
-          "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-          [username, email, hashedPassword],
+          "INSERT INTO users (username, email, password, is_verified, verification_token) VALUES (?, ?, ?, ?, ?)",
+          [username, email, hashedPassword, false, verificationToken],
           (err, result) => {
             if (err) {
               return res.status(500).json({ message: "Fehler beim Erstellen des Nutzers" });
@@ -84,7 +88,35 @@ app.post(
                   return res.status(500).json({ message: "Fehler beim Anlegen der Garage" });
                 }
 
-                res.status(201).json({ message: "Nutzer (und Garage) erfolgreich registriert!" });
+                const transporter = nodemailer.createTransport({
+                  service: "gmail",
+                  auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS,
+                  },
+                });
+
+                const verifyLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
+                const mailOptions = {
+                  from: `"CarGarage" <${process.env.EMAIL_USER}>`,
+                  to: email,
+                  subject: "Bitte bestätige deine Registrierung",
+                  html: `
+                    <h2>Willkommen bei CarGarage!</h2>
+                    <p>Klicke auf den folgenden Link, um deine E-Mail zu bestätigen:</p>
+                    <a href="${verifyLink}">${verifyLink}</a>
+                  `,
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    console.error("Fehler beim E-Mail-Versand:", error);
+                    return res.status(500).json({ message: "Registrierung erfolgreich, aber E-Mail konnte nicht gesendet werden." });
+                  } else {
+                    console.log("Bestätigungs-E-Mail gesendet:", info.response);
+                    res.status(201).json({ message: "Registrierung erfolgreich! Bitte E-Mail bestätigen." });
+                  }
+                });
               }
             );
           }
@@ -97,6 +129,7 @@ app.post(
   }
 );
 
+// 🟢 LOGIN mit Debug-Logging für Fehler
 app.post(
   "/login",
   [
@@ -113,8 +146,14 @@ app.post(
 
     try {
       db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
-        if (err) return res.status(500).json({ message: "Datenbankfehler" });
-        if (result.length === 0) return res.status(400).json({ message: "E-Mail nicht gefunden" });
+        if (err) {
+          console.error("❌ Fehler bei Login-Query:", err);
+          return res.status(500).json({ message: "Datenbankfehler" });
+        }
+
+        if (result.length === 0) {
+          return res.status(400).json({ message: "E-Mail nicht gefunden" });
+        }
 
         const user = result[0];
         const isMatch = await bcrypt.compare(password, user.password);
@@ -125,101 +164,57 @@ app.post(
 
         res.status(200).json({
           message: "Login erfolgreich!",
-          user: { id: user.id, username: user.username, email: user.email },
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+          },
         });
       });
     } catch (error) {
-      console.error("❌ Serverfehler:", error);
+      console.error("❌ Serverfehler beim Login:", error);
       res.status(500).json({ message: "Serverfehler" });
     }
   }
 );
 
+// 🔧 GET /garages?user_id=... → Nutzer-Garagen abrufen
 app.get("/garages", (req, res) => {
   const user_id = req.query.user_id;
-  let query = "SELECT * FROM garages";
-  let params = [];
-  if (user_id) {
-    query += " WHERE user_id = ?";
-    params.push(user_id);
+  if (!user_id) {
+    return res.status(400).json({ message: "user_id fehlt" });
   }
-  db.query(query, params, (err, results) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
+
+  const query = "SELECT * FROM garages WHERE user_id = ?";
+  db.query(query, [user_id], (err, results) => {
+    if (err) {
+      console.error("❌ Fehler beim Laden der Garage:", err);
+      return res.status(500).json({ message: "Datenbankfehler" });
+    }
+
     res.json(results);
   });
 });
 
+// 🔧 GET /garages/:garageId/cars → Autos einer Garage laden
 app.get("/garages/:garageId/cars", (req, res) => {
   const garageId = req.params.garageId;
+
   const query = "SELECT * FROM cars WHERE garage_id = ?";
   db.query(query, [garageId], (err, results) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
-    res.json(results);
-  });
-});
-
-app.post("/cars", (req, res) => {
-  const { garage_id, brand, model, year, image_url } = req.body;
-  if (!garage_id || !brand || !model || !year) {
-    return res.status(400).json({ message: "Fehlende Felder" });
-  }
-  const query = "INSERT INTO cars (garage_id, brand, model, year, image_url) VALUES (?, ?, ?, ?, ?)";
-  db.query(query, [garage_id, brand, model, year, image_url || null], (err, result) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
-    const newCar = {
-      id: result.insertId,
-      garage_id,
-      brand,
-      model,
-      year,
-      image_url: image_url || null,
-    };
-    res.status(201).json(newCar);
-  });
-});
-
-app.delete("/cars/:carId", (req, res) => {
-  const { carId } = req.params;
-  const query = "DELETE FROM cars WHERE id = ?";
-  db.query(query, [carId], (err, result) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Auto nicht gefunden" });
+    if (err) {
+      console.error("❌ Fehler beim Laden der Autos:", err);
+      return res.status(500).json({ message: "Datenbankfehler" });
     }
-    res.status(200).json({ message: "Auto gelöscht" });
-  });
-});
 
-app.get("/cars/:carId/feed", (req, res) => {
-  const { carId } = req.params;
-  const query = "SELECT * FROM car_feed WHERE car_id = ? ORDER BY created_at DESC";
-  db.query(query, [carId], (err, results) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
     res.json(results);
   });
 });
 
-app.post("/cars/:carId/feed", (req, res) => {
-  const { carId } = req.params;
-  const { content, image_url } = req.body;
-  if (!content && !image_url) {
-    return res.status(400).json({ message: "Kein Inhalt oder Bild für den Feed-Post" });
-  }
-  const query = "INSERT INTO car_feed (car_id, content, image_url) VALUES (?, ?, ?)";
-  db.query(query, [carId, content, image_url], (err, result) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
-    const newPostId = result.insertId;
-    const selectQuery = "SELECT * FROM car_feed WHERE id = ?";
-    db.query(selectQuery, [newPostId], (err2, rows) => {
-      if (err2) return res.status(500).json({ message: "Datenbankfehler" });
-      res.status(201).json(rows[0]);
-    });
-  });
-});
-
-// 🔧 Auto inkl. Besitzername abrufen
+// 🔍 GET /cars/:carId → Auto + Besitzername abrufen
 app.get("/cars/:carId", (req, res) => {
   const { carId } = req.params;
+
   const query = `
     SELECT cars.*, users.username 
     FROM cars
@@ -227,25 +222,48 @@ app.get("/cars/:carId", (req, res) => {
     JOIN users ON garages.user_id = users.id
     WHERE cars.id = ?
   `;
+
   db.query(query, [carId], (err, results) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler" });
+    if (err) {
+      console.error("❌ Fehler beim Abrufen des Autos:", err);
+      return res.status(500).json({ message: "Datenbankfehler" });
+    }
+
     if (results.length === 0) {
       return res.status(404).json({ message: "Auto nicht gefunden" });
     }
+
     res.json(results[0]);
   });
 });
 
-// 🗑️ Einzelnen Feed-Post löschen
-app.delete("/cars/:carId/feed/:feedId", (req, res) => {
-  const { feedId } = req.params;
-  const query = "DELETE FROM car_feed WHERE id = ?";
-  db.query(query, [feedId], (err, result) => {
-    if (err) return res.status(500).json({ message: "Datenbankfehler beim Löschen" });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Feed-Post nicht gefunden" });
+// 🔧 POST /cars/:carId/feed → Feed-Post für Auto erstellen
+app.post("/cars/:carId/feed", (req, res) => {
+  const { carId } = req.params;
+  const { content, image_url } = req.body;
+
+  if (!content && !image_url) {
+    return res.status(400).json({ message: "Kein Inhalt oder Bild für den Feed-Post" });
+  }
+
+  const query = "INSERT INTO car_feed (car_id, content, image_url) VALUES (?, ?, ?)";
+  db.query(query, [carId, content, image_url], (err, result) => {
+    if (err) {
+      console.error("❌ Fehler beim Speichern des Feed-Posts:", err);
+      return res.status(500).json({ message: "Datenbankfehler" });
     }
-    res.status(200).json({ message: "Feed-Post gelöscht" });
+
+    const newPostId = result.insertId;
+
+    // Abrufen des frisch erstellten Posts
+    db.query("SELECT * FROM car_feed WHERE id = ?", [newPostId], (err2, rows) => {
+      if (err2) {
+        console.error("❌ Fehler beim Abrufen des neuen Posts:", err2);
+        return res.status(500).json({ message: "Datenbankfehler" });
+      }
+
+      res.status(201).json(rows[0]);
+    });
   });
 });
 
