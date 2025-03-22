@@ -6,8 +6,7 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const API_URL = "https://cargarage-e1yl.onrender.com";
-
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,11 +18,14 @@ const Login = ({ onLogin }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
+
       if (!res.ok) {
         setError(data.message || "Fehler beim Login");
         return;
       }
+
       onLogin(data.user);
     } catch (error) {
       console.error("❌ Fehler beim Login:", error);
@@ -79,12 +81,25 @@ const Login = ({ onLogin }) => {
               style={{ width: "100%", padding: "0.5rem", backgroundColor: "#444", color: "#fff", border: "1px solid #555", marginTop: "0.25rem" }}
             />
           </div>
-          <button type="submit" style={{ width: "100%", padding: "0.5rem", backgroundColor: "#444", color: "#fff", border: "1px solid #555", cursor: "pointer" }}>
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              backgroundColor: "#444",
+              color: "#fff",
+              border: "1px solid #555",
+              cursor: "pointer",
+            }}
+          >
             Login
           </button>
         </form>
         <p style={{ marginTop: "1rem" }}>
-          Noch kein Konto? <Link to="/register" style={{ color: "#646cff", textDecoration: "none" }}>Registrieren</Link>
+          Noch kein Konto?{" "}
+          <Link to="/register" style={{ color: "#646cff", textDecoration: "none" }}>
+            Registrieren
+          </Link>
         </p>
       </div>
     </div>

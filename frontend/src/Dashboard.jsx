@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Header from "./components/Header";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -81,31 +82,10 @@ const Dashboard = ({ user, onLogout }) => {
   }
 
   return (
-    <div style={{ padding: "1rem", position: "relative" }}>
-      {/* 🔝 Top-Bar */}
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          padding: "1rem",
-          backgroundColor: "#1a1a1a",
-          borderBottom: "1px solid #333",
-          display: "flex",
-          justifyContent: "flex-end",
-          zIndex: 100,
-        }}
-      >
-        {onLogout && (
-          <button onClick={onLogout} style={{ padding: "0.5rem 1rem" }}>
-            Logout
-          </button>
-        )}
-      </div>
+    <div style={{ paddingTop: "4rem" }}>
+      <Header onLogout={onLogout} />
 
-      {/* Platz unter Top-Bar */}
-      <div style={{ marginTop: "4rem" }}>
+      <div style={{ padding: "1rem" }}>
         <h2>Willkommen, {user.username}!</h2>
         <h3>{garage.name}</h3>
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import Header from "./components/Header";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function CarDetail({ onLogout, user }) {
   const { carId } = useParams();
-  const navigate = useNavigate();
 
   const [car, setCar] = useState(null);
   const [feedPosts, setFeedPosts] = useState([]);
@@ -99,35 +99,13 @@ function CarDetail({ onLogout, user }) {
     return filename && (filename.endsWith(".mp4") || filename.endsWith(".webm") || filename.endsWith(".ogg"));
   };
 
-  if (!car) return <p>Loading...</p>;
+  if (!car) return <p>Lade Auto...</p>;
 
   const isOwner = user && user.username === car.username;
 
   return (
     <div style={{ paddingTop: "4rem", textAlign: "center" }}>
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "3rem",
-          backgroundColor: "#1a1a1a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 1rem",
-          zIndex: 1000,
-        }}
-      >
-        <button onClick={() => navigate("/")} style={{ padding: "0.4rem 1rem" }}>Zurück</button>
-        <span style={{ color: "#fff", fontWeight: "bold" }}>🚗 Car Garage</span>
-        {onLogout ? (
-          <button onClick={onLogout} style={{ padding: "0.4rem 1rem" }}>Logout</button>
-        ) : (
-          <div style={{ width: "75px" }}></div>
-        )}
-      </div>
+      <Header onLogout={onLogout} />
 
       <h1 style={{ marginTop: "1rem" }}>Car Garage von {car.username}</h1>
       <h2>{car.brand} {car.model}</h2>
@@ -141,6 +119,24 @@ function CarDetail({ onLogout, user }) {
         />
       ) : (
         <p>Kein Bild vorhanden.</p>
+      )}
+
+      {/* QR-Code Link Button */}
+      {isOwner && (
+        <button
+          onClick={() => window.open(`${window.location.origin}/public/${carId}`, "_blank")}
+          style={{
+            margin: "1rem 0",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#646cff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+        >
+          🔗 QR-Code Link öffnen
+        </button>
       )}
 
       <hr />

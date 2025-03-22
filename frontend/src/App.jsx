@@ -1,11 +1,19 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
 import Dashboard from "./Dashboard";
 import CarDetail from "./CarDetail";
+import PublicCar from "./PublicCar";
 
-// Wrapper-Komponente, um Navigation beim Logout zu ermöglichen
+const API_URL = import.meta.env.VITE_API_URL;
+
 function AppWrapper() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -19,11 +27,18 @@ function AppWrapper() {
   const handleLogout = () => {
     setUser(null);
     setIsLoggedIn(false);
-    navigate("/"); // Zurück zur Startseite
+    navigate("/");
   };
 
   return (
-    <div style={{ padding: "1rem", textAlign: "center", maxWidth: "800px", margin: "0 auto" }}>
+    <div
+      style={{
+        padding: "1rem",
+        textAlign: "center",
+        maxWidth: "800px",
+        margin: "0 auto",
+      }}
+    >
       <Routes>
         <Route
           path="/"
@@ -36,14 +51,17 @@ function AppWrapper() {
           }
         />
         <Route path="/register" element={<Register />} />
-        <Route path="/cars/:carId" element={<CarDetail onLogout={handleLogout} user={user} />} />
+        <Route
+          path="/cars/:carId"
+          element={<CarDetail onLogout={handleLogout} user={user} />}
+        />
+        <Route path="/public/:carId" element={<PublicCar />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
   );
 }
 
-// App-Komponente mit Router
 function App() {
   return (
     <Router>
