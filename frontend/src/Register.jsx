@@ -7,6 +7,8 @@ const Register = () => {
   const [error, setError] = useState('');
 
   const API_URL = process.env.REACT_APP_API_URL;
+  console.log("🌐 Aktive API_URL:", API_URL);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
