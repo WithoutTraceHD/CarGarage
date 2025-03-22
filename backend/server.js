@@ -26,6 +26,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// Begrüßungsroute
+app.get("/", (req, res) => {
+  res.json({ message: "Willkommen bei der CarGarage-API!" });
+});
+
 app.post("/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
