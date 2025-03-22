@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function CarDetail({ onLogout, user }) {
   const { carId } = useParams();
   const navigate = useNavigate();
@@ -14,12 +16,12 @@ function CarDetail({ onLogout, user }) {
   const [fileInputKey, setFileInputKey] = useState(Date.now());
 
   useEffect(() => {
-    fetch(`http://localhost:5000/cars/${carId}`)
+    fetch(`${API_URL}/cars/${carId}`)
       .then((res) => res.json())
       .then((data) => setCar(data))
       .catch((err) => console.error("Fehler beim Laden der Auto-Details:", err));
 
-    fetch(`http://localhost:5000/cars/${carId}/feed`)
+    fetch(`${API_URL}/cars/${carId}/feed`)
       .then((res) => res.json())
       .then((data) => setFeedPosts(data))
       .catch((err) => console.error("Fehler beim Laden der Feed-Posts:", err));
@@ -46,11 +48,11 @@ function CarDetail({ onLogout, user }) {
 
     if (feedImages.length > 0) {
       setUploadingImage(true);
-
       const formData = new FormData();
       formData.append("file", feedImages[0]);
+
       try {
-        const res = await fetch("http://localhost:5000/upload", {
+        const res = await fetch(`${API_URL}/upload`, {
           method: "POST",
           body: formData,
         });
@@ -63,7 +65,7 @@ function CarDetail({ onLogout, user }) {
     }
 
     const payload = { content: newPost, image_url };
-    fetch(`http://localhost:5000/cars/${carId}/feed`, {
+    fetch(`${API_URL}/cars/${carId}/feed`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -84,7 +86,7 @@ function CarDetail({ onLogout, user }) {
     if (!confirmDelete) return;
 
     try {
-      await fetch(`http://localhost:5000/cars/${carId}/feed/${postId}`, {
+      await fetch(`${API_URL}/cars/${carId}/feed/${postId}`, {
         method: "DELETE",
       });
       setFeedPosts((prev) => prev.filter((p) => p.id !== postId));
@@ -128,20 +130,19 @@ function CarDetail({ onLogout, user }) {
       </div>
 
       <h1 style={{ marginTop: "1rem" }}>Car Garage von {car.username}</h1>
-
-      <h2>
-        {car.brand} {car.model}
-      </h2>
+      <h2>{car.brand} {car.model}</h2>
       <p>Baujahr: {car.year}</p>
+
       {car.image_url ? (
         <img
-          src={`http://localhost:5000/${car.image_url}`}
+          src={`${API_URL}/${car.image_url}`}
           alt={`${car.brand} ${car.model}`}
           style={{ maxWidth: "100%", marginBottom: "1rem" }}
         />
       ) : (
         <p>Kein Bild vorhanden.</p>
       )}
+
       <hr />
       <h3>Update-Feed</h3>
 
@@ -179,12 +180,7 @@ function CarDetail({ onLogout, user }) {
             </div>
           )}
           <div style={{ marginBottom: "0.5rem" }}>
-            <input
-              key={fileInputKey}
-              type="file"
-              onChange={handleFeedImageChange}
-              multiple
-            />
+            <input key={fileInputKey} type="file" onChange={handleFeedImageChange} multiple />
           </div>
           <textarea
             value={newPost}
@@ -212,13 +208,13 @@ function CarDetail({ onLogout, user }) {
               {post.image_url && (
                 isVideo(post.image_url) ? (
                   <video
-                    src={`http://localhost:5000/${post.image_url}`}
+                    src={`${API_URL}/${post.image_url}`}
                     controls
                     style={{ maxWidth: "100%", marginBottom: "0.5rem" }}
                   />
                 ) : (
                   <img
-                    src={`http://localhost:5000/${post.image_url}`}
+                    src={`${API_URL}/${post.image_url}`}
                     alt="Feed"
                     style={{ maxWidth: "100%", marginBottom: "0.5rem" }}
                   />
