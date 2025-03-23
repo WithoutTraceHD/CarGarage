@@ -75,10 +75,7 @@ router.post(
                   },
                 });
 
-                // WICHTIG: Hier verwenden wir die BACKEND_URL statt FRONTEND_URL,
-                // damit der Link direkt auf das Backend zeigt.
-                // Du musst in .env (lokal + Render) einen Eintrag BACKEND_URL anlegen,
-                // z. B. http://localhost:5000 oder https://cargarage-xyz.onrender.com
+                // WICHTIG: BACKEND_URL verwenden, damit der Link direkt auf das Backend zeigt
                 const verifyLink = `${process.env.BACKEND_URL}/auth/verify?token=${verificationToken}`;
                 console.log("Verifizierungslink:", verifyLink);
 
@@ -169,7 +166,7 @@ router.post(
 );
 
 // GET /verify?token=...
-// Dieser Endpoint setzt is_verified=1, wenn das Token gültig ist
+// Dieser Endpoint setzt is_verified=1, wenn das Token gültig ist und leitet anschließend zum Frontend weiter
 router.get("/verify", (req, res) => {
   const { token } = req.query;
 
@@ -197,9 +194,8 @@ router.get("/verify", (req, res) => {
           return res.status(500).json({ message: "Fehler beim Aktualisieren" });
         }
 
-        // Du kannst hier stattdessen auch res.redirect(...) nutzen,
-        // um zum Frontend weiterzuleiten, oder einfach eine Nachricht anzeigen.
-        return res.send("<h1>Deine E-Mail wurde erfolgreich verifiziert!</h1>");
+        // Nach erfolgreicher Verifizierung leiten wir zum Frontend weiter (z.B. Login-Seite)
+        return res.redirect(`${process.env.FRONTEND_URL}/login?verified=1`);
       }
     );
   });
