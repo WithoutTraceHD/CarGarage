@@ -195,7 +195,7 @@ router.get("/verify", (req, res) => {
         }
 
         // Nach erfolgreicher Verifizierung leiten wir zum Frontend weiter (z.B. Login-Seite)
-        return res.redirect(`${process.env.FRONTEND_URL}/login?verified=1`);
+        return res.redirect(`${process.env.FRONTEND_URL}/?verified=1`);
       }
     );
   });
