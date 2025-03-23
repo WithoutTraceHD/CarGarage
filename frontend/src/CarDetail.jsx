@@ -121,22 +121,53 @@ function CarDetail({ onLogout, user }) {
         <p>Kein Bild vorhanden.</p>
       )}
 
-      {/* QR-Code Link Button */}
       {isOwner && (
-        <button
-          onClick={() => window.open(`${window.location.origin}/public/${carId}`, "_blank")}
-          style={{
-            margin: "1rem 0",
-            padding: "0.5rem 1rem",
-            backgroundColor: "#646cff",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
-          🔗 QR-Code Link öffnen
-        </button>
+        <>
+          <button
+            onClick={() => window.open(`${window.location.origin}/public/${carId}`, "_blank")}
+            style={{
+              margin: "1rem 0 0.5rem",
+              padding: "0.5rem 1rem",
+              backgroundColor: "#646cff",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            🔗 QR-Code Link öffnen
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch(`${API_URL}/send-qr/${carId}`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ userId: user.id }),
+                });
+                const data = await res.json();
+                alert(data.message || "QR-Code wurde gesendet!");
+              } catch (err) {
+                alert("Fehler beim Versenden der E-Mail.");
+                console.error("QR-Code Fehler:", err);
+              }
+            }}
+            style={{
+              margin: "0.5rem 0 1rem",
+              padding: "0.5rem 1rem",
+              backgroundColor: "#28a745",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            📧 QR-Code per E-Mail erhalten
+          </button>
+        </>
       )}
 
       <hr />

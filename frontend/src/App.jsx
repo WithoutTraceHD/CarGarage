@@ -22,6 +22,7 @@ function AppWrapper() {
   const handleLogin = (userData) => {
     setUser(userData);
     setIsLoggedIn(true);
+    navigate("/dashboard");
   };
 
   const handleLogout = () => {
@@ -42,15 +43,13 @@ function AppWrapper() {
       <Routes>
         <Route
           path="/"
-          element={
-            !isLoggedIn ? (
-              <Login onLogin={handleLogin} />
-            ) : (
-              <Dashboard user={user} onLogout={handleLogout} />
-            )
-          }
+          element={!isLoggedIn ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />}
         />
         <Route path="/register" element={<Register />} />
+        <Route
+          path="/dashboard"
+          element={isLoggedIn ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
         <Route
           path="/cars/:carId"
           element={<CarDetail onLogout={handleLogout} user={user} />}
