@@ -23,14 +23,24 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+
     const { username, email, password } = req.body;
+
     try {
       db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
-        if (err) return res.status(500).json({ message: "Datenbankfehler" });
-        if (result.length > 0)
+        if (err) {
+          return res.status(500).json({ message: "Datenbankfehler" });
+        }
+
+        // Prüfen, ob E-Mail bereits existiert
+        if (result.length > 0) {
           return res.status(400).json({ message: "E-Mail bereits vergeben" });
+        }
+
+        // Passwort hashen und Verifizierungstoken erstellen
         const hashedPassword = await bcrypt.hash(password, 10);
         const verificationToken = crypto.randomBytes(32).toString("hex");
+
         db.query(
           "INSERT INTO users (username, email, password, is_verified, verification_token) VALUES (?, ?, ?, ?, ?)",
           [username, email, hashedPassword, false, verificationToken],
@@ -40,8 +50,11 @@ router.post(
                 .status(500)
                 .json({ message: "Fehler beim Erstellen des Nutzers" });
             }
+
             const newUserId = result.insertId;
             const defaultGarageName = "Meine Garage";
+
+            // Standardgarage anlegen
             db.query(
               "INSERT INTO garages (user_id, name) VALUES (?, ?)",
               [newUserId, defaultGarageName],
@@ -52,6 +65,8 @@ router.post(
                     .status(500)
                     .json({ message: "Fehler beim Anlegen der Garage" });
                 }
+
+                // Mail-Transporter einrichten
                 const transporter = nodemailer.createTransport({
                   service: "gmail",
                   auth: {
@@ -59,8 +74,14 @@ router.post(
                     pass: process.env.EMAIL_PASS,
                   },
                 });
-                const verifyLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
+
+                // WICHTIG: Hier verwenden wir die BACKEND_URL statt FRONTEND_URL,
+                // damit der Link direkt auf das Backend zeigt.
+                // Du musst in .env (lokal + Render) einen Eintrag BACKEND_URL anlegen,
+                // z. B. http://localhost:5000 oder https://cargarage-xyz.onrender.com
+                const verifyLink = `${process.env.BACKEND_URL}/auth/verify?token=${verificationToken}`;
                 console.log("Verifizierungslink:", verifyLink);
+
                 const mailOptions = {
                   from: `"CarGarage" <${process.env.EMAIL_USER}>`,
                   to: email,
@@ -71,6 +92,7 @@ router.post(
                     <a href="${verifyLink}">${verifyLink}</a>
                   `,
                 };
+
                 transporter.sendMail(mailOptions, (error, info) => {
                   if (error) {
                     console.error("Fehler beim E-Mail-Versand:", error);
@@ -109,21 +131,27 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+
     const { email, password } = req.body;
+
     try {
       db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
         if (err) {
           console.error("Fehler bei Login-Query:", err);
           return res.status(500).json({ message: "Datenbankfehler" });
         }
+
         if (result.length === 0) {
           return res.status(400).json({ message: "E-Mail nicht gefunden" });
         }
+
         const user = result[0];
         const isMatch = await bcrypt.compare(password, user.password);
+
         if (!isMatch) {
           return res.status(400).json({ message: "Falsches Passwort" });
         }
+
         res.status(200).json({
           message: "Login erfolgreich!",
           user: {
@@ -139,5 +167,42 @@ router.post(
     }
   }
 );
+
+// GET /verify?token=...
+// Dieser Endpoint setzt is_verified=1, wenn das Token gültig ist
+router.get("/verify", (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ message: "Token fehlt" });
+  }
+
+  db.query("SELECT * FROM users WHERE verification_token = ?", [token], (err, results) => {
+    if (err) {
+      console.error("Fehler beim Abrufen des Tokens:", err);
+      return res.status(500).json({ message: "Datenbankfehler" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ message: "Ungültiger Token" });
+    }
+
+    const user = results[0];
+    db.query(
+      "UPDATE users SET is_verified = 1, verification_token = '' WHERE id = ?",
+      [user.id],
+      (err2) => {
+        if (err2) {
+          console.error("Fehler beim Aktualisieren:", err2);
+          return res.status(500).json({ message: "Fehler beim Aktualisieren" });
+        }
+
+        // Du kannst hier stattdessen auch res.redirect(...) nutzen,
+        // um zum Frontend weiterzuleiten, oder einfach eine Nachricht anzeigen.
+        return res.send("<h1>Deine E-Mail wurde erfolgreich verifiziert!</h1>");
+      }
+    );
+  });
+});
 
 module.exports = router;
