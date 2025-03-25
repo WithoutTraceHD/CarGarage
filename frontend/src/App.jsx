@@ -43,18 +43,22 @@ function AppWrapper() {
       <Routes>
         <Route
           path="/"
-          element={!isLoggedIn ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />}
+          element={
+            !isLoggedIn ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />
+          }
         />
         <Route path="/register" element={<Register />} />
         <Route
           path="/dashboard"
-          element={isLoggedIn ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />}
+          element={
+            isLoggedIn ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />
+          }
         />
         <Route
           path="/cars/:carId"
           element={<CarDetail onLogout={handleLogout} user={user} />}
         />
-        <Route path="/public/:id" element={<PublicCar />} />
+        <Route path="/public/cars/:carId" element={<PublicCar />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>

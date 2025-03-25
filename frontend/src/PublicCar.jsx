@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const PublicCar = () => {
-  const { id } = useParams();
+  const { carId } = useParams(); // Parameter angepasst
   const [car, setCar] = useState(null);
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,7 @@ const PublicCar = () => {
   useEffect(() => {
     const fetchCar = async () => {
       try {
-        const res = await fetch(`${API_URL}/cars/${id}`);
+        const res = await fetch(`${API_URL}/cars/${carId}`);
         const data = await res.json();
         setCar(data);
       } catch (err) {
@@ -22,7 +22,7 @@ const PublicCar = () => {
 
     const fetchFeed = async () => {
       try {
-        const res = await fetch(`${API_URL}/cars/${id}/feed`);
+        const res = await fetch(`${API_URL}/cars/${carId}/feed`);
         const data = await res.json();
         setFeed(data);
       } catch (err) {
@@ -34,7 +34,7 @@ const PublicCar = () => {
 
     fetchCar();
     fetchFeed();
-  }, [id]);
+  }, [carId]);
 
   if (loading) return <p style={{ textAlign: "center" }}>Lade Fahrzeugdaten...</p>;
   if (!car) return <p style={{ textAlign: "center" }}>Fahrzeug nicht gefunden.</p>;
@@ -59,18 +59,18 @@ const PublicCar = () => {
       {feed.length === 0 ? (
         <p>Keine Updates vorhanden.</p>
       ) : (
-        feed.map(post => (
+        feed.map((post) => (
           <div
             key={post.id}
             style={{
               background: "#1a1a1a",
               padding: "1rem",
               marginBottom: "1rem",
-              borderRadius: "8px"
+              borderRadius: "8px",
             }}
           >
-            {post.image_url && (
-              isVideo(post.image_url) ? (
+            {post.image_url &&
+              (isVideo(post.image_url) ? (
                 <video
                   src={`${API_URL}/${post.image_url}`}
                   controls
@@ -82,8 +82,7 @@ const PublicCar = () => {
                   alt="Update"
                   style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "0.5rem" }}
                 />
-              )
-            )}
+              ))}
             <p>{post.content}</p>
             <small>{new Date(post.created_at).toLocaleString()}</small>
           </div>
