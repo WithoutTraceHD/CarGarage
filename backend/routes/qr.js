@@ -23,7 +23,8 @@ router.post("/:carId", async (req, res) => {
     // Hier generieren wir einen QR-Code als Data URL. Du kannst hier den Inhalt anpassen,
     // z.B. eine URL oder einen spezifischen Text. Im Beispiel generieren wir einen QR-Code,
     // der auf eine URL zeigt, die zum entsprechenden Auto führt.
-    const qrText = `https://example.com/car/${carId}`;
+    const qrText = `${process.env.FRONTEND_URL}/public/${carId}`;
+
     
     QRCode.toDataURL(qrText, (qrErr, qrUrl) => {
       if (qrErr) {
