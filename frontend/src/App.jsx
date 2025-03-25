@@ -54,7 +54,7 @@ function AppWrapper() {
           path="/cars/:carId"
           element={<CarDetail onLogout={handleLogout} user={user} />}
         />
-        <Route path="/public/:carId" element={<PublicCar />} />
+        <Route path="/public/:id" element={<PublicCar />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
