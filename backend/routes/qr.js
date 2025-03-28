@@ -20,9 +20,10 @@ router.post("/:carId", async (req, res) => {
     }
 
     const userEmail = results[0].email;
-    // Hier generieren wir einen QR-Code, der auf die öffentliche Fahrzeugseite zeigt.
-    // Wir hängen "/public/cars/{carId}" an die Frontend-URL.
-    const qrText = `${process.env.FRONTEND_URL}/public/cars/${carId}`;
+
+    // FIX: Doppelslash vermeiden
+    const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, "");
+    const qrText = `${frontendUrl}/public/cars/${carId}`;
     console.log("Generierter QR-Code Link:", qrText);
     
     QRCode.toDataURL(qrText, (qrErr, qrUrl) => {
