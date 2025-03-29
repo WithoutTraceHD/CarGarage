@@ -1,7 +1,7 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
 const db = require("../db");
-const QRCode = require("qrcode"); // Import der QR-Code-Bibliothek
+const QRCode = require("qrcode");
 
 const router = express.Router();
 
@@ -9,30 +9,32 @@ router.post("/:carId", async (req, res) => {
   const { carId } = req.params;
   const { userId } = req.body;
 
-  // Nutzer-E-Mail anhand der userId aus der Datenbank holen
+  // 1. E-Mail des Nutzers anhand der ID holen
   db.query("SELECT email FROM users WHERE id = ?", [userId], (err, results) => {
     if (err) {
       console.error("Fehler beim Abrufen der Nutzer-E-Mail:", err);
       return res.status(500).json({ message: "Datenbankfehler" });
     }
+
     if (results.length === 0) {
       return res.status(404).json({ message: "Nutzer nicht gefunden" });
     }
 
     const userEmail = results[0].email;
 
-    // FIX: Doppelslash vermeiden
-    const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, "");
+    // 2. QR-Link generieren (jetzt auf Vercel-Domain!)
+    const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, ""); // Trailing Slash entfernen
     const qrText = `${frontendUrl}/public/cars/${carId}`;
     console.log("Generierter QR-Code Link:", qrText);
-    
+
+    // 3. QR-Code als DataURL erzeugen
     QRCode.toDataURL(qrText, (qrErr, qrUrl) => {
       if (qrErr) {
         console.error("Fehler beim Generieren des QR-Codes:", qrErr);
         return res.status(500).json({ message: "Fehler beim Generieren des QR-Codes" });
       }
 
-      // E-Mail-Versand einrichten
+      // 4. Mailversand vorbereiten
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -48,6 +50,7 @@ router.post("/:carId", async (req, res) => {
         html: `<p>Hier ist dein QR-Code:</p><img src="${qrUrl}" alt="QR-Code"/>`,
       };
 
+      // 5. Mail senden
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.error("Fehler beim Senden der E-Mail:", error);
