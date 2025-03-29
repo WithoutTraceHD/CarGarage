@@ -32,12 +32,10 @@ router.post(
           return res.status(500).json({ message: "Datenbankfehler" });
         }
 
-        // Prüfen, ob E-Mail bereits existiert
         if (result.length > 0) {
           return res.status(400).json({ message: "E-Mail bereits vergeben" });
         }
 
-        // Passwort hashen und Verifizierungstoken erstellen
         const hashedPassword = await bcrypt.hash(password, 10);
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
@@ -54,7 +52,6 @@ router.post(
             const newUserId = result.insertId;
             const defaultGarageName = "Meine Garage";
 
-            // Standardgarage anlegen
             db.query(
               "INSERT INTO garages (user_id, name) VALUES (?, ?)",
               [newUserId, defaultGarageName],
@@ -66,7 +63,6 @@ router.post(
                     .json({ message: "Fehler beim Anlegen der Garage" });
                 }
 
-                // Mail-Transporter einrichten
                 const transporter = nodemailer.createTransport({
                   service: "gmail",
                   auth: {
@@ -75,7 +71,6 @@ router.post(
                   },
                 });
 
-                // WICHTIG: BACKEND_URL verwenden, damit der Link direkt auf das Backend zeigt
                 const verifyLink = `${process.env.BACKEND_URL}/auth/verify?token=${verificationToken}`;
                 console.log("Verifizierungslink:", verifyLink);
 
@@ -165,8 +160,7 @@ router.post(
   }
 );
 
-// GET /verify?token=...
-// Dieser Endpoint setzt is_verified=1, wenn das Token gültig ist und leitet anschließend zum Frontend weiter
+// E-Mail-Verifizierung
 router.get("/verify", (req, res) => {
   const { token } = req.query;
 
@@ -194,10 +188,28 @@ router.get("/verify", (req, res) => {
           return res.status(500).json({ message: "Fehler beim Aktualisieren" });
         }
 
-        // Nach erfolgreicher Verifizierung leiten wir zum Frontend weiter (z.B. Login-Seite)
         return res.redirect(`${process.env.FRONTEND_URL}/?verified=1`);
       }
     );
+  });
+});
+
+
+// ✅ NEU: Benutzername über userId abrufen
+router.get("/user/:id", (req, res) => {
+  const userId = req.params.id;
+
+  db.query("SELECT username FROM users WHERE id = ?", [userId], (err, results) => {
+    if (err) {
+      console.error("❌ Fehler beim Abrufen des Benutzers:", err);
+      return res.status(500).json({ message: "Datenbankfehler" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Benutzer nicht gefunden" });
+    }
+
+    res.json(results[0]);
   });
 });
 
