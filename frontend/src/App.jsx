@@ -16,8 +16,14 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 function AppWrapper() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // ✅ User beim Start aus localStorage laden
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState(!!user); // sofortiger Login-Status
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -26,6 +32,7 @@ function AppWrapper() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("user"); // ❌ beim Ausloggen auch localStorage leeren
     setUser(null);
     setIsLoggedIn(false);
     navigate("/");

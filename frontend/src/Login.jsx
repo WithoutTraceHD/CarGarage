@@ -26,6 +26,7 @@ const Login = ({ onLogin }) => {
         return;
       }
 
+      localStorage.setItem("user", JSON.stringify(data.user)); // dauerhaft speichern
       onLogin(data.user);
     } catch (error) {
       console.error("❌ Fehler beim Login:", error);
