@@ -158,7 +158,8 @@ const Dashboard = ({ user, onLogout }) => {
               {searchType === "cars" &&
                 searchResults.map((car) => (
                   <li key={car.id}>
-                    🚗 {car.brand} {car.model} ({car.year}) – <strong>von {car.username}</strong> – <a href={`/public/cars/${car.id}`}>Anzeigen</a>
+                    🚗 {car.brand} {car.model} ({car.year}) – <strong>von {car.username}</strong> –{" "}
+                    <a href={`/public/cars/${car.id}`}>Anzeigen</a>
                   </li>
                 ))}
             </ul>

@@ -20,7 +20,7 @@ router.get("/users", (req, res) => {
   );
 });
 
-// 🔍 Auto-Suche nach Marke oder Modell + Username
+// 🔍 Auto-Suche nach Marke oder Modell + Username (Besitzer)
 router.get("/cars", (req, res) => {
   const { query } = req.query;
   if (!query) return res.status(400).json({ message: "Suchbegriff fehlt" });
