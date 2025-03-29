@@ -10,6 +10,10 @@ const Dashboard = ({ user, onLogout }) => {
   const [activeForAddCar, setActiveForAddCar] = useState(false);
   const [newCar, setNewCar] = useState({ brand: "", model: "", year: "", image_url: "" });
 
+  const [searchType, setSearchType] = useState("users");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
   useEffect(() => {
     if (!user || !user.id) return;
 
@@ -27,6 +31,18 @@ const Dashboard = ({ user, onLogout }) => {
       })
       .catch((err) => console.error("Fehler beim Laden der Garage:", err));
   }, [user]);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      const res = await fetch(`${API_URL}/search/${searchType}?query=${searchQuery}`);
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (err) {
+      console.error("Fehler bei der Suche:", err);
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -86,6 +102,69 @@ const Dashboard = ({ user, onLogout }) => {
       <Header onLogout={onLogout} />
 
       <div style={{ padding: "1rem" }}>
+        {/* Suchleiste */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            alignItems: "center",
+            marginBottom: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Suche nach Benutzer oder Auto..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ flex: 1, padding: "0.5rem" }}
+          />
+
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
+            style={{ padding: "0.5rem" }}
+          >
+            <option value="users">Benutzer</option>
+            <option value="cars">Autos</option>
+          </select>
+
+          <button
+            onClick={handleSearch}
+            style={{
+              padding: "0.5rem 1rem",
+              backgroundColor: "#646cff",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+            }}
+          >
+            Suchen
+          </button>
+        </div>
+
+        {/* Suchergebnisse */}
+        {searchResults.length > 0 && (
+          <div style={{ marginBottom: "2rem" }}>
+            <h3>Suchergebnisse:</h3>
+            <ul>
+              {searchType === "users" &&
+                searchResults.map((user) => (
+                  <li key={user.id}>
+                    👤 {user.username} – <a href={`/public/user/${user.id}`}>Garage ansehen</a>
+                  </li>
+                ))}
+
+              {searchType === "cars" &&
+                searchResults.map((car) => (
+                  <li key={car.id}>
+                    🚗 {car.brand} {car.model} ({car.year}) – <a href={`/public/cars/${car.id}`}>Anzeigen</a>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
+
         <h2>Willkommen, {user.username}!</h2>
         <h3>{garage.name}</h3>
 

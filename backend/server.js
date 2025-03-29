@@ -8,10 +8,9 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
-// QR-Code Router importieren
 const qrRouter = require("./routes/qr");
-// Auth Router importieren
 const authRouter = require("./routes/auth");
+const searchRoutes = require("./routes/search"); // 🔍 NEU
 
 const app = express();
 app.use(cors());
@@ -21,7 +20,6 @@ app.use("/uploads", express.static("uploads"));
 
 const PORT = 5000;
 
-// Multer-Konfiguration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -33,11 +31,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Router einbinden
 app.use("/send-qr", qrRouter);
 app.use("/auth", authRouter);
+app.use("/search", searchRoutes); // 🔍 NEU
 
-// Begrüßungsroute
 app.get("/", (req, res) => {
   res.json({ message: "Willkommen bei der CarGarage-API!" });
 });
@@ -53,7 +50,6 @@ app.post("/upload", upload.single("file"), (req, res) => {
   });
 });
 
-// GET Garagen
 app.get("/garages", (req, res) => {
   const user_id = req.query.user_id;
   if (!user_id) {
@@ -70,7 +66,6 @@ app.get("/garages", (req, res) => {
   });
 });
 
-// GET Autos einer Garage
 app.get("/garages/:garageId/cars", (req, res) => {
   const garageId = req.params.garageId;
   const query = "SELECT * FROM cars WHERE garage_id = ?";
@@ -83,7 +78,6 @@ app.get("/garages/:garageId/cars", (req, res) => {
   });
 });
 
-// GET Auto + Besitzer
 app.get("/cars/:carId", (req, res) => {
   const { carId } = req.params;
   const query = `
@@ -105,7 +99,6 @@ app.get("/cars/:carId", (req, res) => {
   });
 });
 
-// POST Auto hinzufügen
 app.post("/cars", (req, res) => {
   const { garage_id, brand, model, year, image_url } = req.body;
   if (!garage_id || !brand || !model || !year) {
@@ -131,7 +124,6 @@ app.post("/cars", (req, res) => {
   });
 });
 
-// POST Feed-Eintrag
 app.post("/cars/:carId/feed", (req, res) => {
   const { carId } = req.params;
   const { content, image_url } = req.body;
@@ -155,7 +147,6 @@ app.post("/cars/:carId/feed", (req, res) => {
   });
 });
 
-// DELETE Auto + Feed
 app.delete("/cars/:carId", (req, res) => {
   const carId = req.params.carId;
   const deleteFeedQuery = "DELETE FROM car_feed WHERE car_id = ?";
