@@ -11,19 +11,19 @@ import Register from "./Register";
 import Dashboard from "./Dashboard";
 import CarDetail from "./CarDetail";
 import PublicCar from "./PublicCar";
+import PublicGarage from "./PublicGarage"; // ✅ NEU
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function AppWrapper() {
   const navigate = useNavigate();
 
-  // ✅ User beim Start aus localStorage laden
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const [isLoggedIn, setIsLoggedIn] = useState(!!user); // sofortiger Login-Status
+  const [isLoggedIn, setIsLoggedIn] = useState(!!user);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -32,7 +32,7 @@ function AppWrapper() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user"); // ❌ beim Ausloggen auch localStorage leeren
+    localStorage.removeItem("user");
     setUser(null);
     setIsLoggedIn(false);
     navigate("/");
@@ -66,6 +66,7 @@ function AppWrapper() {
           element={<CarDetail onLogout={handleLogout} user={user} />}
         />
         <Route path="/public/cars/:carId" element={<PublicCar />} />
+        <Route path="/public/user/:userId" element={<PublicGarage />} /> {/* ✅ NEU */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
