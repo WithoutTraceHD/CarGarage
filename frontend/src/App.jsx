@@ -18,21 +18,23 @@ const API_URL = import.meta.env.VITE_API_URL;
 function AppWrapper() {
   const navigate = useNavigate();
 
+  // ✅ Statt localStorage jetzt sessionStorage verwenden
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
 
   const handleLogin = (userData) => {
+    sessionStorage.setItem("user", JSON.stringify(userData)); // ✅ neu
     setUser(userData);
     setIsLoggedIn(true);
     navigate("/dashboard");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user"); // ✅ neu
     setUser(null);
     setIsLoggedIn(false);
     navigate("/");
@@ -66,7 +68,7 @@ function AppWrapper() {
           element={<CarDetail onLogout={handleLogout} user={user} />}
         />
         <Route path="/public/cars/:carId" element={<PublicCar />} />
-        <Route path="/public/user/:userId" element={<PublicGarage />} /> {/* ✅ NEU */}
+        <Route path="/public/user/:userId" element={<PublicGarage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
