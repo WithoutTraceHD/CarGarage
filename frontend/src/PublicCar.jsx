@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import Header from "./components/Header";
+import Header from "./components/Header"; // ✅ Header eingebunden
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -9,6 +9,7 @@ const PublicCar = () => {
   const [car, setCar] = useState(null);
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
+  const loggedInUser = JSON.parse(sessionStorage.getItem("user")); // ✅ Benutzer aus Session prüfen
 
   useEffect(() => {
     const fetchCar = async () => {
@@ -45,39 +46,69 @@ const PublicCar = () => {
   if (!car) return <p style={{ textAlign: "center" }}>Fahrzeug nicht gefunden.</p>;
 
   return (
-    <>
-      <Header />
+    <div style={{ paddingTop: "4rem" }}>
+      <Header /> {/* ✅ Header oben */}
       <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto", color: "#fff" }}>
         <h1>{car.brand} {car.model}</h1>
         <p>Baujahr: {car.year}</p>
-
-        {/* 🔙 Zurück zur öffentlichen Garage */}
-        <p>
-          🔗 <Link to={`/public/user/${car.user_id}`}>Zur Garage von {car.username}</Link>
-        </p>
-
-        {car.image_url && (
+        {car.image_url ? (
           <img
             src={`${API_URL}/${car.image_url}`}
             alt={car.model}
-            onError={(e) => (e.target.style.display = "none")}
             style={{ width: "100%", borderRadius: "10px", marginBottom: "1rem" }}
+            onError={(e) => e.target.style.display = "none"} // Fallback bei kaputtem Bild
           />
+        ) : (
+          <p>Kein Fahrzeugbild vorhanden.</p>
         )}
 
-        <h2 style={{ marginTop: "2rem" }}>📢 Updates</h2>
+        {/* 🔁 Link zur öffentlichen Garage */}
+        <Link
+          to={`/public/user/${car.user_id}`}
+          style={{
+            display: "inline-block",
+            marginTop: "1rem",
+            marginRight: "1rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#646cff",
+            color: "#fff",
+            textDecoration: "none",
+            borderRadius: "5px",
+          }}
+        >
+          Zur Garage von {car.username}
+        </Link>
+
+        {/* 🔁 Zurück zur eigenen Garage (nur wenn eingeloggt) */}
+        {loggedInUser && (
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-block",
+              marginTop: "1rem",
+              padding: "0.5rem 1rem",
+              backgroundColor: "#444",
+              color: "#fff",
+              textDecoration: "none",
+              borderRadius: "5px",
+            }}
+          >
+            Zurück zur eigenen Garage
+          </Link>
+        )}
+
+        <h2 style={{ marginTop: "2rem" }}>Updates</h2>
         {feed.length === 0 ? (
-          <p style={{ color: "#ccc" }}>Keine Updates vorhanden.</p>
+          <p>Keine Updates vorhanden.</p>
         ) : (
           feed.map((post) => (
             <div
               key={post.id}
               style={{
-                background: "#1f1f1f",
+                background: "#1a1a1a",
                 padding: "1rem",
-                marginBottom: "1.5rem",
-                borderRadius: "10px",
-                boxShadow: "0 0 5px rgba(0,0,0,0.3)",
+                marginBottom: "1rem",
+                borderRadius: "8px",
               }}
             >
               {post.image_url &&
@@ -85,32 +116,23 @@ const PublicCar = () => {
                   <video
                     src={`${API_URL}/${post.image_url}`}
                     controls
-                    style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "0.75rem" }}
+                    style={{ maxWidth: "100%", marginBottom: "0.5rem" }}
                   />
                 ) : (
                   <img
                     src={`${API_URL}/${post.image_url}`}
                     alt="Update"
-                    onError={(e) => (e.target.style.display = "none")}
-                    style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "0.75rem" }}
+                    style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "0.5rem" }}
+                    onError={(e) => e.target.style.display = "none"} // Fallback bei Bildfehler
                   />
                 ))}
-
-              <p style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{post.content}</p>
-              <small style={{ color: "#888" }}>
-                {new Date(post.created_at).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </small>
+              <p>{post.content}</p>
+              <small>{new Date(post.created_at).toLocaleString()}</small>
             </div>
           ))
         )}
       </div>
-    </>
+    </div>
   );
 };
 

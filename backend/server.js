@@ -81,7 +81,7 @@ app.get("/garages/:garageId/cars", (req, res) => {
 app.get("/cars/:carId", (req, res) => {
   const { carId } = req.params;
   const query = `
-    SELECT cars.*, users.username 
+    SELECT cars.*, users.username, users.id AS user_id
     FROM cars
     JOIN garages ON cars.garage_id = garages.id
     JOIN users ON garages.user_id = users.id
