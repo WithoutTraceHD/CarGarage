@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -23,8 +27,8 @@ a:hover {
 
 body {
   margin: 0;
-  /* display: flex;       // auskommentieren */
-  /* place-items: center; // auskommentieren */
+  /* display: flex;       // auskommentiert */
+  /* place-items: center; // auskommentiert */
   min-width: 320px;
   min-height: 100vh;
 }

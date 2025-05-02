@@ -16,15 +16,12 @@ const Dashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (!user || !user.id) return;
-
     fetch(`${API_URL}/garages?user_id=${user.id}`)
       .then((res) => res.json())
       .then(async (garages) => {
         if (garages.length === 0) return;
-
         const userGarage = garages[0];
         setGarage(userGarage);
-
         const resCars = await fetch(`${API_URL}/garages/${userGarage.id}/cars`);
         const carsData = await resCars.json();
         setCars(carsData);
@@ -34,7 +31,6 @@ const Dashboard = ({ user, onLogout }) => {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-
     try {
       const res = await fetch(`${API_URL}/search/${searchType}?query=${searchQuery}`);
       const data = await res.json();
@@ -49,7 +45,6 @@ const Dashboard = ({ user, onLogout }) => {
     if (!file) return;
     const formData = new FormData();
     formData.append("file", file);
-
     fetch(`${API_URL}/upload`, { method: "POST", body: formData })
       .then((res) => res.json())
       .then((data) => {
@@ -61,15 +56,7 @@ const Dashboard = ({ user, onLogout }) => {
   const handleAddCarSubmit = (e) => {
     e.preventDefault();
     if (!garage) return;
-
-    const payload = {
-      garage_id: garage.id,
-      brand: newCar.brand,
-      model: newCar.model,
-      year: parseInt(newCar.year),
-      image_url: newCar.image_url || null,
-    };
-
+    const payload = { garage_id: garage.id, brand: newCar.brand, model: newCar.model, year: parseInt(newCar.year), image_url: newCar.image_url || null };
     fetch(`${API_URL}/cars`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,51 +80,33 @@ const Dashboard = ({ user, onLogout }) => {
       .catch((err) => console.error(err));
   };
 
-  if (!garage) {
-    return <p>Lade Garage...</p>;
-  }
+  if (!garage) return <p className="text-center text-gray-300">Lade Garage...</p>;
 
   return (
-    <div style={{ paddingTop: "4rem" }}>
+    <div className="pt-16 px-4 max-w-4xl mx-auto">
       <Header onLogout={onLogout} />
 
-      <div style={{ padding: "1rem" }}>
+      <div className="space-y-8">
         {/* Suchleiste */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            alignItems: "center",
-            marginBottom: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="flex flex-wrap gap-2 items-center mb-4">
           <input
             type="text"
             placeholder="Suche nach Benutzer oder Auto..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ flex: 1, padding: "0.5rem" }}
+            className="flex-1 p-2 rounded bg-gray-800 text-white"
           />
-
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value)}
-            style={{ padding: "0.5rem" }}
+            className="p-2 rounded bg-gray-800 text-white"
           >
             <option value="users">Benutzer</option>
             <option value="cars">Autos</option>
           </select>
-
           <button
             onClick={handleSearch}
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "#646cff",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Suchen
           </button>
@@ -145,58 +114,51 @@ const Dashboard = ({ user, onLogout }) => {
 
         {/* Suchergebnisse */}
         {searchResults.length > 0 && (
-          <div style={{ marginBottom: "2rem" }}>
-            <h3>Suchergebnisse:</h3>
-            <ul>
+          <div className="bg-gray-900 p-4 rounded-lg shadow">
+            <h3 className="text-xl font-semibold mb-2">Suchergebnisse:</h3>
+            <ul className="space-y-1">
               {searchType === "users" &&
                 searchResults.map((user) => (
                   <li key={user.id}>
-                    👤 {user.username} – <a href={`/public/user/${user.id}`}>Garage ansehen</a>
+                    👤 {user.username} –{" "}
+                    <a href={`/public/user/${user.id}`} className="text-blue-400 hover:underline">
+                      Garage ansehen
+                    </a>
                   </li>
                 ))}
-
               {searchType === "cars" &&
                 searchResults.map((car) => (
                   <li key={car.id}>
-                    🚗 {car.brand} {car.model} ({car.year}) – <strong>von {car.username}</strong> –{" "}
-                    <a href={`/public/cars/${car.id}`}>Anzeigen</a>
+                    🚗 {car.brand} {car.model} ({car.year}) –{" "}
+                    <strong>von {car.username}</strong> –{" "}
+                    <a href={`/public/cars/${car.id}`} className="text-blue-400 hover:underline">
+                      Anzeigen
+                    </a>
                   </li>
                 ))}
             </ul>
           </div>
         )}
 
-        <h2>Willkommen, {user.username}!</h2>
-        <h3>{garage.name}</h3>
+        <h2 className="text-3xl font-bold text-center">Willkommen, {user.username}!</h2>
+        <h3 className="text-xl text-center text-gray-400">{garage.name}</h3>
 
         {cars.length > 0 ? (
-          <ul>
+          <ul className="space-y-2">
             {cars.map((car) => (
               <li
                 key={car.id}
-                style={{
-                  marginBottom: "0.5rem",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+                className="flex justify-between items-center bg-gray-800 p-4 rounded-lg"
               >
                 <Link
                   to={`/cars/${car.id}`}
-                  style={{ textDecoration: "none", color: "#646cff" }}
+                  className="text-blue-400 hover:underline"
                 >
                   {car.brand} {car.model} ({car.year})
                 </Link>
                 <button
                   onClick={() => handleDeleteCar(car.id)}
-                  style={{
-                    marginLeft: "1rem",
-                    backgroundColor: "#ff4d4d",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                  }}
+                  className="ml-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                 >
                   Löschen
                 </button>
@@ -204,18 +166,18 @@ const Dashboard = ({ user, onLogout }) => {
             ))}
           </ul>
         ) : (
-          <p>Keine Autos gefunden.</p>
+          <p className="text-center text-gray-400">Keine Autos gefunden.</p>
         )}
 
         {activeForAddCar ? (
-          <form onSubmit={handleAddCarSubmit} style={{ marginTop: "1rem" }}>
+          <form onSubmit={handleAddCarSubmit} className="bg-gray-900 p-6 rounded-lg shadow space-y-4">
             <input
               type="text"
               placeholder="Marke"
               value={newCar.brand}
               onChange={(e) => setNewCar({ ...newCar, brand: e.target.value })}
               required
-              style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+              className="w-full p-2 rounded bg-gray-800 text-white"
             />
             <input
               type="text"
@@ -223,7 +185,7 @@ const Dashboard = ({ user, onLogout }) => {
               value={newCar.model}
               onChange={(e) => setNewCar({ ...newCar, model: e.target.value })}
               required
-              style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+              className="w-full p-2 rounded bg-gray-800 text-white"
             />
             <input
               type="number"
@@ -231,34 +193,24 @@ const Dashboard = ({ user, onLogout }) => {
               value={newCar.year}
               onChange={(e) => setNewCar({ ...newCar, year: e.target.value })}
               required
-              style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+              className="w-full p-2 rounded bg-gray-800 text-white"
             />
             <input
               type="file"
               onChange={handleFileChange}
-              style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+              className="w-full p-2 rounded bg-gray-800 text-white"
             />
             {newCar.image_url && (
-              <p style={{ fontSize: "0.9rem", color: "#646cff" }}>
-                Bild hochgeladen: {newCar.image_url}
-              </p>
+              <p className="text-sm text-green-400">Bild hochgeladen: {newCar.image_url}</p>
             )}
-            <button type="submit" style={{ width: "100%", padding: "0.5rem" }}>
+            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
               Auto hinzufügen
             </button>
           </form>
         ) : (
           <button
             onClick={() => setActiveForAddCar(true)}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              cursor: "pointer",
-              backgroundColor: "#646cff",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-            }}
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
           >
             Auto hinzufügen
           </button>
